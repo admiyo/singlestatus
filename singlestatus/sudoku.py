@@ -1,5 +1,6 @@
 #!/bin/python
 import math
+from singlestatus import samples
 
 BASIS = 3
 DIM = BASIS * BASIS
@@ -100,27 +101,6 @@ def remove_from_set(cell_set, val):
     return cell_set.replace(val, '')
 
 
-simple_puzzle = ("530070000" +
-                 "600195000" +
-                 "098000060" +
-                 "800060003" +
-                 "400803001" +
-                 "700020006" +
-                 "060000280" +
-                 "000419005" +
-                 "000080079")
-
-sample_puzzle = ("800000000" +
-                 "003600000" +
-                 "070090200" +
-                 "050007000" +
-                 "000045700" +
-                 "000100030" +
-                 "001000068" +
-                 "008500010" +
-                 "090000400")
-
-
 def populate_full_board():
     board = []
     for row in range(DIM):
@@ -144,7 +124,7 @@ def puzzle_to_array(puzzle):
 
 
 def draw_puzzle(puzzle):
-    puzzle_array = puzzle_to_array(sample_puzzle)
+    puzzle_array = puzzle_to_array(puzzle)
 
     for row in range(DIM):
         for col in range(DIM):
@@ -217,18 +197,19 @@ def compare_and_reduce(board, target, other):
 
 def solve_puzzle(puzzle):
     board = populate_full_board()
-    puzzle_array = puzzle_to_array(sample_puzzle)
+    puzzle_array = puzzle_to_array(puzzle)
     initialize_board(board, puzzle_array)
     reduced = remove_solved(board)
     while reduced > 0:
         print("number reduce was %d" % reduced)
         reduced = remove_solved(board)
 
-    draw_board(board)
+    return board
 
 
 def test_anything():
     assert(False)
 
-draw_puzzle(sample_puzzle)
-solve_puzzle(sample_puzzle)
+draw_puzzle(samples.sample_puzzle)
+board = solve_puzzle(samples.sample_puzzle)
+draw_board(board)

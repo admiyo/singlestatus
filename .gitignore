@@ -1,1 +1,3 @@
 .tox
+singlestatus/__pycache__
+singlestatus/__pycache__/*
