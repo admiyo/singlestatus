@@ -1,100 +1,9 @@
 #!/bin/python
 import math
 from singlestatus import samples
+from singlestatus import display
 
-BASIS = 3
-DIM = BASIS * BASIS
-HALFISH = (DIM - 1) / 2
-CROSS_BARS = ["┼", "┿", "╂", "╋"]
-FULL_SET = "123456789"
-
-
-def is_bold(val):
-    return val % BASIS == 0
-
-
-def draw_tee(tee, dim):
-    piece = ord(tee[0]) + 3
-    if is_bold(dim):
-        piece = piece + 4
-    print("%c" % piece, end='')
-
-
-def draw_cross(row, col):
-    piece = 0
-    if is_bold(row):
-        piece = piece + 1
-    if is_bold(col):
-        piece = piece + 2
-    print("%c" % CROSS_BARS[piece], end='')
-
-
-def draw_set():
-    print(FULL_SET, end='')
-
-
-def draw_padding():
-    print("         ", end='')
-
-
-def pad_row():
-    for col in range(DIM):
-        if col % BASIS != 0:
-            print("│", end="")
-        else:
-            print("┃", end="")
-        draw_padding()
-    print("┃")
-
-
-def draw_cell_length(bold=False):
-    for _ in range(9):
-        if bold:
-            print("━", end='')
-        else:
-            print("─", end='')
-
-
-def draw_board(board):
-    print("┏", end="")
-    for col in range(DIM):
-        if col > 0:
-            draw_tee('┬', col)
-        draw_cell_length(True)
-    print("┓")
-
-    for row in range(DIM):
-        if (row > 0):
-            if is_bold(row):
-                print("┣", end='')
-            else:
-                print("┠", end='')
-
-            for col in range(DIM):
-                if col > 0:
-                    draw_cross(row, col)
-                draw_cell_length(is_bold(row))
-            if is_bold(row):
-                print("┫", end='')
-            else:
-                print("┨", end='')
-            print("")
-        pad_row()
-        for col in range(DIM):
-            if col % BASIS != 0:
-                print("│", end="")
-            else:
-                print("┃", end="")
-            print(board[row][col].strip().center(9, ' '), end="")
-        print("┃")
-        pad_row()
-
-    print("┗", end='')
-    for col in range(DIM):
-        if col > 0:
-            draw_tee('┴', col)
-        draw_cell_length(True)
-    print("┛")
+from singlestatus import common
 
 
 def remove_from_set(cell_set, val):
@@ -103,40 +12,12 @@ def remove_from_set(cell_set, val):
 
 def populate_full_board():
     board = []
-    for row in range(DIM):
+    for row in range(common.DIM):
         cur_row = []
-        for col in range(DIM):
-            cur_row.append(FULL_SET)
+        for col in range(common.DIM):
+            cur_row.append(common.FULL_SET)
         board.append(cur_row)
     return board
-
-
-def puzzle_to_array(puzzle):
-    puzzle_array = []
-    for i in range(len(puzzle)):
-        col = i % DIM
-        if col == 0:
-            cur_row = []
-        cur_row.append(puzzle[i])
-        if col == DIM - 1:
-            puzzle_array.append(cur_row)
-    return puzzle_array
-
-
-def draw_puzzle(puzzle):
-    puzzle_array = puzzle_to_array(puzzle)
-
-    for row in range(DIM):
-        for col in range(DIM):
-            if col == 0:
-                print()
-
-            c = ord(puzzle_array[row][col]) - ord('0')
-            if c == 0:
-                print("  ", end="")
-            else:
-                print(" %d" % c, end="")
-    print()
 
 
 def is_solved(cell):
@@ -144,12 +25,12 @@ def is_solved(cell):
 
 
 def initialize_board(board, puzzle_array):
-    for row in range(DIM):
-        for col in range(DIM):
+    for row in range(common.DIM):
+        for col in range(common.DIM):
             p = puzzle_array[row][col]
             c = ord(p) - ord('0')
             if c > 0:
-                for m in FULL_SET:
+                for m in common.FULL_SET:
                     if m == p:
                         continue
                     board[row][col] = remove_from_set(board[row][col], m)
@@ -157,22 +38,22 @@ def initialize_board(board, puzzle_array):
 
 def remove_solved(board):
     reduced = 0
-    for row in range(DIM):
-        for col in range(DIM):
+    for row in range(common.DIM):
+        for col in range(common.DIM):
             cell = board[row][col]
             if is_solved(cell):
                 continue
 
-            sg_row = math.floor(row / BASIS) * BASIS
-            sg_col = math.floor(col / BASIS) * BASIS
-            for r in range(BASIS):
-                for c in range(BASIS):
+            sg_row = math.floor(row / common.BASIS) * common.BASIS
+            sg_col = math.floor(col / common.BASIS) * common.BASIS
+            for r in range(common.BASIS):
+                for c in range(common.BASIS):
                     reduced = reduced + compare_and_reduce(
                         board, (row, col), (sg_row + r, sg_col + c))
-            for r in range(DIM):
+            for r in range(common.DIM):
                 reduced = reduced + compare_and_reduce(
                     board, (row, col), (r, col))
-            for c in range(DIM):
+            for c in range(common.DIM):
                 reduced = reduced + compare_and_reduce(
                     board, (row, col), (row, c))
     return reduced
@@ -197,7 +78,7 @@ def compare_and_reduce(board, target, other):
 
 def solve_puzzle(puzzle):
     board = populate_full_board()
-    puzzle_array = puzzle_to_array(puzzle)
+    puzzle_array = common.puzzle_to_array(puzzle)
     initialize_board(board, puzzle_array)
     reduced = remove_solved(board)
     while reduced > 0:
@@ -206,10 +87,6 @@ def solve_puzzle(puzzle):
 
     return board
 
-
-def test_anything():
-    assert(False)
-
-draw_puzzle(samples.sample_puzzle)
+display.draw_puzzle(samples.sample_puzzle)
 board = solve_puzzle(samples.sample_puzzle)
-draw_board(board)
+display.draw_board(board)
