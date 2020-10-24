@@ -1,6 +1,6 @@
 #!/bin/python
-
-
+from math import floor
+import  string
 BASIS=3
 DIM=BASIS * BASIS
 HALFISH=(DIM-1)/2
@@ -8,11 +8,9 @@ HALFISH=(DIM-1)/2
 def is_bold(val):
     return val % BASIS == 0
 
-def draw_tee(tee, row, col):
-    piece = ord(tee[0])
-    if is_bold(row):
-        piece = piece + 3
-    if is_bold(col):
+def draw_tee(tee, dim):
+    piece = ord(tee[0])  + 3
+    if is_bold(dim):
         piece = piece + 4
     print ("%c"%piece, end='')
 
@@ -43,10 +41,6 @@ def pad_row():
         draw_padding()
     print("┃")
 
-def remove_from_set(cell_set, val):
-    if (val < 0) | (val > 9):
-        assert("invalid value %s" %val)
-
 def draw_cell_length(bold=False):
     for _ in range(9):
         if bold:
@@ -58,12 +52,11 @@ def draw_board(board):
      print ("┏",end="")
      for col in range (DIM):
          if col > 0:
-             draw_tee('┬', 0, col)
+             draw_tee('┬',col)
          draw_cell_length(True)
      print("┓") 
 
      for row in range (DIM):
-
          if (row > 0):
              if is_bold(row) :
                  print("┣", end='')
@@ -79,33 +72,136 @@ def draw_board(board):
              else:
                  print("┨", end='')
              print("") 
-
          pad_row()
-                      
          for col in range (DIM):
              if col % BASIS != 0  :
                  print("│", end="")
              else:
-                 print("┃", end="")
-             print(board[row][col], end="")
+                 print("┃", end="")                 
+             print(board[row][col].strip().center(9, ' '), end="")
          print("┃")
          pad_row()
-
 
      print("┗", end='')
      for col in range (DIM):
          if col > 0:
-             draw_tee('┴', 0, col)
+             draw_tee('┴', col)
          draw_cell_length(True)     
      print("┛") 
 
-board = []
+def remove_from_set(cell_set, val):
+    return cell_set.replace(val, '')
 
-for row in range(DIM):
-    cur_row = []
-    for col in range (DIM):
-        cur_row.append(FULL_SET)
-    board.append(cur_row)
-     
-draw_board(board)
-     
+
+#sample_puzzle = "530070000600195000098000060800060003400803001700020006060000280000419005000080079"
+
+sample_puzzle = "800000000003600000070090200050007000000045700000100030001000068008500010090000400"
+
+
+def populate_full_board():
+    board = []
+    for row in range(DIM):
+        cur_row = []
+        for col in range (DIM):
+            cur_row.append(FULL_SET)
+        board.append(cur_row)
+    return board
+
+def puzzle_to_array(puzzle):
+    puzzle_array = []
+    for i in range(len(puzzle)):
+        col = i % DIM
+        row = (i - col + 1) / DIM
+        if col == 0:
+            cur_row = []
+        cur_row.append(puzzle[i])
+        if col == DIM - 1:
+            puzzle_array.append(cur_row)
+    return puzzle_array
+
+    
+def draw_puzzle(puzzle):
+    puzzle_array = puzzle_to_array(sample_puzzle)
+
+    for row in range(DIM):
+        for col in range(DIM):
+            if col == 0:
+                print()
+
+            c = ord( puzzle_array[row][col]) - ord('0')
+            if c == 0:
+                print ("  " , end="")
+            else:
+                print (" %d" % c, end="")
+    print()
+
+
+def is_solved(cell):
+    return(len(cell.strip()) == 1)
+
+def initialize_board(board, puzzle_array):
+    for row in range(DIM):
+        for col in range(DIM):
+            p = puzzle_array[row][col]
+            c = ord(p) - ord('0')
+            if c > 0:
+                for m in FULL_SET:
+                    if m == p:
+                        continue
+                    board[row][col] = remove_from_set(board[row][col], m)
+
+
+def remove_solved(board):
+    reduced = 0
+    for row in range(DIM):
+        for col in range(DIM):
+            cell = board[row][col]
+            if is_solved(cell):
+                continue
+            
+            sg_row = floor(row / BASIS) * BASIS
+            sg_col = floor(col / BASIS) * BASIS      
+            for r in range(BASIS):
+                for c in range(BASIS):
+                   reduced = reduced + compare_and_reduce(board,
+                                               (row, col),
+                                               (sg_row + r, sg_col + c))
+            #look at all rows in the column
+            for r in range(DIM):
+                reduced = reduced + compare_and_reduce(
+                    board, (row, col), (r, col))
+
+            for c in range(DIM):
+                reduced = reduced + compare_and_reduce(
+                    board, (row, col), (row, c))
+    return reduced
+def compare_and_reduce(board, target, other):
+    if (target == other):
+        return 0
+    other_cell  = board[other[0]][other[1]]
+    target_cell = board[target[0]][target[1]]
+    if is_solved(target_cell):
+        return 0
+    if is_solved(other_cell):
+        cell = remove_from_set(target_cell, other_cell.strip())
+        assert( len(cell.strip()) != 0)
+        board[target[0]][target[1]] = cell
+        if target_cell != cell:        
+            print("removing %s from %s" % (other_cell, target_cell))
+            return 1
+    return 0
+    
+            
+def solve_puzzle(puzzle):
+    board = populate_full_board()
+    puzzle_array = puzzle_to_array(sample_puzzle)
+    initialize_board(board, puzzle_array)
+    reduced = remove_solved(board)
+    while reduced > 0:
+        print ("number reduce was %d" % reduced)
+        reduced = remove_solved(board)
+        
+    draw_board(board)
+
+draw_puzzle(sample_puzzle)    
+solve_puzzle(sample_puzzle)
