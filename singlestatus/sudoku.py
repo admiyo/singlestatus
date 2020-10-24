@@ -55,45 +55,45 @@ def draw_cell_length(bold=False):
 
 
 def draw_board(board):
-     print("┏", end="")
-     for col in range(DIM):
-         if col > 0:
-             draw_tee('┬', col)
-         draw_cell_length(True)
-     print("┓")
+    print("┏", end="")
+    for col in range(DIM):
+        if col > 0:
+            draw_tee('┬', col)
+        draw_cell_length(True)
+    print("┓")
 
-     for row in range(DIM):
-         if (row > 0):
-             if is_bold(row):
-                 print("┣", end='')
-             else:
-                 print("┠", end='')
+    for row in range(DIM):
+        if (row > 0):
+            if is_bold(row):
+                print("┣", end='')
+            else:
+                print("┠", end='')
 
-             for col in range(DIM):
-                 if col > 0:
-                     draw_cross(row, col)
-                 draw_cell_length(is_bold(row))
-             if is_bold(row):
-                 print("┫", end='')
-             else:
-                 print("┨", end='')
-             print("")
-         pad_row()
-         for col in range(DIM):
-             if col % BASIS != 0:
-                 print("│", end="")
-             else:
-                 print("┃", end="")
-             print(board[row][col].strip().center(9, ' '), end="")
-         print("┃")
-         pad_row()
+            for col in range(DIM):
+                if col > 0:
+                    draw_cross(row, col)
+                draw_cell_length(is_bold(row))
+            if is_bold(row):
+                print("┫", end='')
+            else:
+                print("┨", end='')
+            print("")
+        pad_row()
+        for col in range(DIM):
+            if col % BASIS != 0:
+                print("│", end="")
+            else:
+                print("┃", end="")
+            print(board[row][col].strip().center(9, ' '), end="")
+        print("┃")
+        pad_row()
 
-     print("┗", end='')
-     for col in range(DIM):
-         if col > 0:
-             draw_tee('┴', col)
-         draw_cell_length(True)
-     print("┛")
+    print("┗", end='')
+    for col in range(DIM):
+        if col > 0:
+            draw_tee('┴', col)
+        draw_cell_length(True)
+    print("┛")
 
 
 def remove_from_set(cell_set, val):
