@@ -89,6 +89,17 @@ def test_reduce_singletons_none():
         assert(board[0][c] == test_set)
 
 
+def test_reduce_matched_pairs_postitive():
+    test_set = "3456789"
+    board = sudoku.populate_full_board()
+    board[0][0] = "12"
+    board[0][8] = "12"
+    itr = sudoku.RowCellIterator(board, 0)
+    sudoku.reduce_matched_pairs_in_section(itr)
+    for c in range(1, 8):
+        assert(board[0][c] == test_set)
+
+
 def test_cell_get():
     board = common.puzzle_to_array(samples.simple_puzzle)
     cell = sudoku.Cell(board, 8, 8)

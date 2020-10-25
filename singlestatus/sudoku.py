@@ -12,6 +12,11 @@ class Cell:
         self.r = r
         self.c = c
 
+    def __eq__(self, other):
+        return ((self.board == other.board)
+                and (self.r == other.r)
+                and (self.c == other.c))
+
     def get(self):
         return self.board[self.r][self.c]
 
@@ -24,9 +29,11 @@ class Cell:
     def is_solved(self):
         return (len(self.get().strip()) == 1)
 
-    def remove_from_set(self, val):
+    def remove_from_set(self, vals):
         curr = self.get()
-        return curr.replace(val, '')
+        for c in vals:
+            curr = curr.replace(c, '')
+        return curr
 
     def compare_and_reduce(self, other):
         if self.is_solved():
@@ -48,6 +55,9 @@ class RowCellIterator:
         self.row_index = row_index
         self.col = 0
 
+    def reset(self):
+        self.col = 0
+
     def __iter__(self):
         return self
 
@@ -67,6 +77,9 @@ class ColCellIterator:
         self.row = 0
         self.col = col
 
+    def reset(self):
+        self.row = 0
+
     def __iter__(self):
         return self
 
@@ -85,6 +98,10 @@ class BlockCellIterator:
         self.board = board
         self.sg_row = math.floor(row / common.BASIS) * common.BASIS
         self.sg_col = math.floor(col / common.BASIS) * common.BASIS
+        self.block_row = 0
+        self.block_col = 0
+
+    def reset(self):
         self.block_row = 0
         self.block_col = 0
 
@@ -109,8 +126,10 @@ class BlockCellIterator:
         return cell
 
 
-def remove_from_set(cell_set, val):
-    return cell_set.replace(val, '')
+def remove_from_set(cell_set, vals):
+    for c in vals:
+        cell_set = cell_set.replace(c, '')
+    return cell_set
 
 
 def populate_full_board():
@@ -166,6 +185,32 @@ def reduce_singletons_in_section(itr, test_val):
         found.set("%d" % test_val)
 
 
+def reduce_matched_pairs_in_section(itr):
+    firsts = {}
+    second = None
+
+    for cell in itr:
+        val = cell.get()
+        if len(val) == 2:
+            if firsts.get(val) is None:
+                firsts[val] = cell
+            else:
+                second = cell
+                break
+    if second is None:
+        return
+    val = second.get()
+    first = firsts[val]
+    itr.reset()
+    for cell in itr:
+        if cell == first:
+            continue
+        if cell == second:
+            continue
+        new_value = cell.remove_from_set(val)
+        cell.set(new_value)
+
+
 def reduce_singletons(board):
     for col in range(common.DIM):
         for test_val in range(common.DIM):
@@ -177,9 +222,24 @@ def reduce_singletons(board):
 
     for r in range(common.BASIS):
         for c in range(common.BASIS):
-            reduce_singletons_in_section(
-                BlockCellIterator(board, r * common.BASIS, c * common.BASIS),
-                test_val)
+            for test_val in range(common.DIM):
+                reduce_singletons_in_section(
+                    BlockCellIterator(
+                        board, r * common.BASIS, c * common.BASIS),
+                    test_val)
+
+
+def reduce_matched_pairs(board):
+    for col in range(common.DIM):
+        reduce_matched_pairs_in_section(ColCellIterator(board, col))
+
+    for row in range(common.DIM):
+        reduce_matched_pairs_in_section(RowCellIterator(board, row))
+
+    for r in range(common.BASIS):
+        for c in range(common.BASIS):
+            reduce_matched_pairs_in_section(
+                BlockCellIterator(board, r * common.BASIS, c * common.BASIS))
 
 
 def solve_puzzle(puzzle):
@@ -188,6 +248,7 @@ def solve_puzzle(puzzle):
     initialize_board(board, puzzle_array)
     reduced = remove_solved(board)
     while reduced > 0:
+        reduce_matched_pairs(board)
         reduce_singletons(board)
         reduced = remove_solved(board)
     return board
