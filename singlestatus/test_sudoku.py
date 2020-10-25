@@ -48,6 +48,47 @@ def test_cell_compare_and_reduce():
     assert(count == 0)
 
 
+def test_contains():
+    board = sudoku.populate_full_board()
+    puzzle_array = common.puzzle_to_array(samples.simple_puzzle)
+    sudoku.initialize_board(board, puzzle_array)
+    target_cell = sudoku.Cell(board, 0, 8)
+    assert(target_cell.get() == common.FULL_SET)
+    assert(target_cell.contains(1))
+    assert(target_cell.contains(9))
+
+    other_cell = sudoku.Cell(board, 8, 8)
+    assert(not other_cell.contains(1))
+    assert(other_cell.contains(9))
+
+
+def test_reduce_singletons_positive():
+    test_val = 4
+    test_str = "%d" % test_val
+    test_set = common.FULL_SET.replace(test_str, '')
+
+    board = sudoku.populate_full_board()
+    for c in range(1, 9):
+        board[0][c] = test_set
+    assert(board[0][1] == test_set)
+
+    itr = sudoku.RowCellIterator(board, 0)
+    sudoku.reduce_singletons_in_section(itr, test_val)
+    assert(board[0][0] == test_str)
+    for c in range(1, 9):
+        assert(board[0][c] == test_set)
+
+
+def test_reduce_singletons_none():
+    test_val = 4
+    test_set = common.FULL_SET
+    board = sudoku.populate_full_board()
+    itr = sudoku.RowCellIterator(board, 0)
+    sudoku.reduce_singletons_in_section(itr, test_val)
+    for c in range(0, 9):
+        assert(board[0][c] == test_set)
+
+
 def test_cell_get():
     board = common.puzzle_to_array(samples.simple_puzzle)
     cell = sudoku.Cell(board, 8, 8)

@@ -15,6 +15,9 @@ class Cell:
     def get(self):
         return self.board[self.r][self.c]
 
+    def contains(self, val):
+        return self.get().find("%d" % val) > -1
+
     def set(self, val):
         self.board[self.r][self.c] = val
 
@@ -150,15 +153,45 @@ def remove_solved(board):
     return reduced
 
 
+def reduce_singletons_in_section(itr, test_val):
+    found = None
+    for other in itr:
+        if other.contains(test_val):
+            if found is None:
+                found = other
+            else:
+                found = None
+                return
+    if found is not None:
+        found.set("%d" % test_val)
+
+
+def reduce_singletons(board):
+    for col in range(common.DIM):
+        for test_val in range(common.DIM):
+            reduce_singletons_in_section(ColCellIterator(board, col), test_val)
+
+    for row in range(common.DIM):
+        for test_val in range(common.DIM):
+            reduce_singletons_in_section(RowCellIterator(board, row), test_val)
+
+    for r in range(common.BASIS):
+        for c in range(common.BASIS):
+            reduce_singletons_in_section(
+                BlockCellIterator(board, r * common.BASIS, c * common.BASIS),
+                test_val)
+
+
 def solve_puzzle(puzzle):
     board = populate_full_board()
     puzzle_array = common.puzzle_to_array(puzzle)
     initialize_board(board, puzzle_array)
     reduced = remove_solved(board)
     while reduced > 0:
+        reduce_singletons(board)
         reduced = remove_solved(board)
     return board
 
 display.draw_puzzle(samples.sample_puzzle)
-sample_board = solve_puzzle(samples.sample_puzzle)
+sample_board = solve_puzzle(samples.medium_puzzle)
 display.draw_board(sample_board)
