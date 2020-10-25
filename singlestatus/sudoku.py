@@ -120,10 +120,6 @@ def populate_full_board():
     return board
 
 
-def is_solved(cell):
-    return(len(cell.strip()) == 1)
-
-
 def initialize_board(board, puzzle_array):
     for row in range(common.DIM):
         for col in range(common.DIM):
@@ -140,11 +136,9 @@ def remove_solved(board):
     reduced = 0
     for row in range(common.DIM):
         for col in range(common.DIM):
-            cell = board[row][col]
-            if is_solved(cell):
-                continue
-
             target = Cell(board, row, col)
+            if target.is_solved():
+                continue
             for other in BlockCellIterator(board, row, col):
                 reduced = reduced + target.compare_and_reduce(other)
 
