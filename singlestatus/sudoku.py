@@ -156,22 +156,6 @@ def remove_solved(board):
     return reduced
 
 
-def compare_and_reduce(board, target, other):
-    if(target == other):
-        return 0
-    other_cell = board[other[0]][other[1]]
-    target_cell = board[target[0]][target[1]]
-    if is_solved(target_cell):
-        return 0
-    if is_solved(other_cell):
-        cell = remove_from_set(target_cell, other_cell.strip())
-        assert(len(cell.strip()) != 0)
-        board[target[0]][target[1]] = cell
-        if target_cell != cell:
-            return 1
-    return 0
-
-
 def solve_puzzle(puzzle):
     board = populate_full_board()
     puzzle_array = common.puzzle_to_array(puzzle)
