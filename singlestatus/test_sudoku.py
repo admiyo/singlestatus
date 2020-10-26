@@ -33,8 +33,8 @@ def test_cell_compare_and_reduce():
     assert(other_cell.get() == '9')
 
     count = target_cell.compare_and_reduce(other_cell)
-    assert(target_cell.get() == '12345678')
-    assert(count == 1)
+    assert(target_cell.get() == '248')
+    assert(count == 6)
 
     count = other_cell.compare_and_reduce(other_cell)
     assert(other_cell.get() == '9')
@@ -44,7 +44,7 @@ def test_cell_compare_and_reduce():
     assert(other_cell.get() == common.FULL_SET)
 
     count = target_cell.compare_and_reduce(other_cell)
-    assert(target_cell.get() == '12345678')
+    assert(target_cell.get() == '248')
     assert(count == 0)
 
 

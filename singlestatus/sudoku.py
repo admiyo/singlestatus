@@ -44,15 +44,62 @@ class Cell:
             assert(len(cell.strip()) != 0)
             self.set(cell)
             if curr != cell:
-                return 1
+                reduced = 1 + self.reduce_solved()
+                return reduced
         return 0
+
+    def solve(self, p):
+        if self.is_solved():
+            return
+        solve_set = common.FULL_SET.replace(p, '')
+        self.set(self.remove_from_set(solve_set))
+        self.reduce_solved()
+
+    def reduce_solved(self):
+        reduced = 0
+        row = self.r
+        col = self.c
+        board = self.board
+        if self.is_solved():
+            return 0
+        for other in BlockCellIterator(board, row, col):
+            reduced = reduced + self.compare_and_reduce(other)
+        for other in ColCellIterator(board, col):
+            reduced = reduced + self.compare_and_reduce(other)
+        for other in RowCellIterator(board, row):
+            reduced = reduced + self.compare_and_reduce(other)
+        return reduced
+
+
+class BoardCellIterator:
+    def __init__(self, board):
+        self.board = board
+        self.row = 0
+        self.col = 0
+
+    def reset(self):
+        self.col = 0
+        self.row = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.row >= common.DIM:
+            raise StopIteration
+        val = Cell(self.board, self.row, self.col)
+        self.col = self.col + 1
+        if self.col >= common.DIM:
+            self.col = 0
+            self.row = self.row + 1
+        return val
 
 
 # Iterates through all the Cells in a given Row
 class RowCellIterator:
-    def __init__(self, board, row_index):
+    def __init__(self, board, row):
         self.board = board
-        self.row_index = row_index
+        self.row = row
         self.col = 0
 
     def reset(self):
@@ -63,7 +110,7 @@ class RowCellIterator:
 
     def __next__(self):
         if self.col < common.DIM:
-            val = Cell(self.board, self.row_index, self.col)
+            val = Cell(self.board, self.row, self.col)
             self.col = self.col + 1
             return val
         else:
@@ -143,32 +190,16 @@ def populate_full_board():
 
 
 def initialize_board(board, puzzle_array):
-    for row in range(common.DIM):
-        for col in range(common.DIM):
-            p = puzzle_array[row][col]
-            c = ord(p) - ord('0')
-            if c > 0:
-                for m in common.FULL_SET:
-                    if m == p:
-                        continue
-                    board[row][col] = remove_from_set(board[row][col], m)
+    for cell in BoardCellIterator(board):
+        p = puzzle_array[cell.r][cell.c]
+        if p > '0':
+            cell.solve(p)
 
 
-def remove_solved(board):
+def reduce_solved(board):
     reduced = 0
-    for row in range(common.DIM):
-        for col in range(common.DIM):
-            target = Cell(board, row, col)
-            if target.is_solved():
-                continue
-            for other in BlockCellIterator(board, row, col):
-                reduced = reduced + target.compare_and_reduce(other)
-
-            for other in ColCellIterator(board, col):
-                reduced = reduced + target.compare_and_reduce(other)
-
-            for other in RowCellIterator(board, row):
-                reduced = reduced + target.compare_and_reduce(other)
+    for target in BoardCellIterator(board):
+        reduced = reduced + target.reduce_solved()
     return reduced
 
 
@@ -246,13 +277,13 @@ def solve_puzzle(puzzle):
     board = populate_full_board()
     puzzle_array = common.puzzle_to_array(puzzle)
     initialize_board(board, puzzle_array)
-    reduced = remove_solved(board)
+    reduced = reduce_solved(board)
     while reduced > 0:
         reduce_matched_pairs(board)
         reduce_singletons(board)
-        reduced = remove_solved(board)
+        reduced = reduce_solved(board)
     return board
 
 display.draw_puzzle(samples.sample_puzzle)
-sample_board = solve_puzzle(samples.medium_puzzle)
+sample_board = solve_puzzle(samples.hard_puzzle)
 display.draw_board(sample_board)
