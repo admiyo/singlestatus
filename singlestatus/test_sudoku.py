@@ -73,7 +73,7 @@ def test_reduce_singletons_positive():
     assert(board[0][1] == test_set)
 
     itr = sudoku.RowCellIterator(board, 0)
-    sudoku.reduce_singletons_in_section(itr, test_val)
+    sudoku.reduce_singleton_in_section(itr, test_val)
     assert(board[0][0] == test_str)
     for c in range(1, 9):
         assert(board[0][c] == test_set)
@@ -84,7 +84,7 @@ def test_reduce_singletons_none():
     test_set = common.FULL_SET
     board = sudoku.populate_full_board()
     itr = sudoku.RowCellIterator(board, 0)
-    sudoku.reduce_singletons_in_section(itr, test_val)
+    sudoku.reduce_singleton_in_section(itr, test_val)
     for c in range(0, 9):
         assert(board[0][c] == test_set)
 

@@ -57,16 +57,13 @@ class Cell:
 
     def reduce_solved(self):
         reduced = 0
-        row = self.r
-        col = self.c
-        board = self.board
         if self.is_solved():
             return 0
-        for other in BlockCellIterator(board, row, col):
+        for other in BlockCellIterator(self.board, self.r, self.c):
             reduced = reduced + self.compare_and_reduce(other)
-        for other in ColCellIterator(board, col):
+        for other in ColCellIterator(self.board, self.c):
             reduced = reduced + self.compare_and_reduce(other)
-        for other in RowCellIterator(board, row):
+        for other in RowCellIterator(self.board, self.r):
             reduced = reduced + self.compare_and_reduce(other)
         return reduced
 
@@ -203,7 +200,7 @@ def reduce_solved(board):
     return reduced
 
 
-def reduce_singletons_in_section(itr, test_val):
+def reduce_singleton_in_section(itr, test_val):
     found = None
     for other in itr:
         if other.contains(test_val):
@@ -213,7 +210,13 @@ def reduce_singletons_in_section(itr, test_val):
                 found = None
                 return
     if found is not None:
-        found.set("%d" % test_val)
+        found.solve("%d" % test_val)
+
+
+def reduce_singletons_in_section(itr):
+    for test_val in range(common.DIM):
+        reduce_singleton_in_section(itr, test_val)
+        itr.reset()
 
 
 def reduce_matched_pairs_in_section(itr):
@@ -243,33 +246,23 @@ def reduce_matched_pairs_in_section(itr):
 
 
 def reduce_singletons(board):
-    for col in range(common.DIM):
-        for test_val in range(common.DIM):
-            reduce_singletons_in_section(ColCellIterator(board, col), test_val)
-
-    for row in range(common.DIM):
-        for test_val in range(common.DIM):
-            reduce_singletons_in_section(RowCellIterator(board, row), test_val)
-
-    for r in range(common.BASIS):
-        for c in range(common.BASIS):
-            for test_val in range(common.DIM):
-                reduce_singletons_in_section(
-                    BlockCellIterator(
-                        board, r * common.BASIS, c * common.BASIS),
-                    test_val)
+    visit_all(board, reduce_singletons_in_section)
 
 
 def reduce_matched_pairs(board):
+    visit_all(board, reduce_matched_pairs_in_section)
+
+
+def visit_all(board, visitor):
     for col in range(common.DIM):
-        reduce_matched_pairs_in_section(ColCellIterator(board, col))
+        visitor(ColCellIterator(board, col))
 
     for row in range(common.DIM):
-        reduce_matched_pairs_in_section(RowCellIterator(board, row))
+        visitor(RowCellIterator(board, row))
 
     for r in range(common.BASIS):
         for c in range(common.BASIS):
-            reduce_matched_pairs_in_section(
+            visitor(
                 BlockCellIterator(board, r * common.BASIS, c * common.BASIS))
 
 
