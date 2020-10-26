@@ -1,5 +1,6 @@
 #!/bin/python
 import math
+import json
 from singlestatus import samples
 from singlestatus import display
 
@@ -277,6 +278,20 @@ def solve_puzzle(puzzle):
         reduced = reduce_solved(board)
     return board
 
-display.draw_puzzle(samples.sample_puzzle)
-sample_board = solve_puzzle(samples.hard_puzzle)
-display.draw_board(sample_board)
+
+def solve_sample():
+    display.draw_puzzle(samples.sample_puzzle)
+    sample_board = solve_puzzle(samples.sample_puzzle)
+    display.draw_board(sample_board)
+
+
+def solve_from_file():
+    solved_map = dict()
+    infile = open("data/sample_sudoku_board_inputs.csv")
+    line = infile.readline()
+    for line in infile:
+        solved_map[line] = solve_puzzle(line)
+    print(json.dumps(solved_map))
+
+
+solve_from_file()
