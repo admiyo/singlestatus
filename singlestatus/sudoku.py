@@ -319,7 +319,10 @@ def solve_puzzle(puzzle):
     puzzle_array = common.puzzle_to_array(puzzle)
     initialize_board(board, puzzle_array)
     reduced = reduce_solved(board)
+    reduced = 10
     while reduced > 0:
+        reduced = reduced - 1
+        x_wing(board)
         reduce_matched_pairs(board)
         reduce_singletons(board)
         reduced = reduce_solved(board)
