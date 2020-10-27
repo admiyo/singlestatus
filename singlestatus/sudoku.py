@@ -14,6 +14,7 @@ class Cell:
         self.c = c
 
     def __eq__(self, other):
+        assert(isinstance(other, Cell))
         return ((self.board == other.board)
                 and (self.r == other.r)
                 and (self.c == other.c))
@@ -267,6 +268,52 @@ def visit_all(board, visitor):
                 BlockCellIterator(board, r * common.BASIS, c * common.BASIS))
 
 
+def x_wing(board):
+    xmap = dict()
+    for row in range(common.DIM):
+        valmap = dict()
+        for cell in RowCellIterator(board, row):
+            if cell.is_solved():
+                continue
+            for val in cell.get():
+                if valmap.get(val) is None:
+                    valmap[val] = []
+                valmap[val].append(cell)
+        xmap[row] = valmap
+
+    pairs_by_val = dict()
+    for row, matches in xmap.items():
+        for val, cells in matches.items():
+            if (len(cells)) == 2:
+                if pairs_by_val.get(val) is None:
+                    pairs_by_val[val] = []
+                pairs_by_val[val].append(cells)
+
+    reduced = 0
+    for val, rows in pairs_by_val.items():
+        pos_dict = dict()
+        for r in rows:
+            tup = (r[0].c, r[1].c)
+            o = pos_dict.get(tup)
+            if o is None:
+                pos_dict[tup] = r
+            else:
+                for mc in r:
+                    for target in ColCellIterator(board, mc.c):
+                        if target.r == r[0].c:
+                            continue
+                        if target.r == r[1].c:
+                            continue
+                        if target.r == o[0].c:
+                            continue
+                        if target.r == o[1].c:
+                            continue
+                        if val in target.get():
+                            target.set(target.remove_from_set(val))
+                            reduced = reduced + 1 + target.reduce_solved()
+    return reduced
+
+
 def solve_puzzle(puzzle):
     board = populate_full_board()
     puzzle_array = common.puzzle_to_array(puzzle)
@@ -294,4 +341,5 @@ def solve_from_file():
     print(json.dumps(solved_map))
 
 
-solve_from_file()
+# solve_from_file()
+solve_sample()
