@@ -221,7 +221,7 @@ def reduce_singletons_in_section(itr):
         itr.reset()
 
 
-def reduce_matched_pairs_in_section(itr):
+def reduce_naked_pairs_in_section(itr):
     firsts = {}
     second = None
 
@@ -251,8 +251,8 @@ def reduce_singletons(board):
     visit_all(board, reduce_singletons_in_section)
 
 
-def reduce_matched_pairs(board):
-    visit_all(board, reduce_matched_pairs_in_section)
+def reduce_naked_pairs(board):
+    visit_all(board, reduce_naked_pairs_in_section)
 
 
 def visit_all(board, visitor):
@@ -323,7 +323,7 @@ def solve_puzzle(puzzle):
     while reduced > 0:
         reduced = reduced - 1
         x_wing(board)
-        reduce_matched_pairs(board)
+        reduce_naked_pairs(board)
         reduce_singletons(board)
         reduced = reduce_solved(board)
     return board
