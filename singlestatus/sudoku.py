@@ -70,30 +70,6 @@ class Cell:
         return reduced
 
 
-class BoardCellIterator:
-    def __init__(self, board):
-        self.board = board
-        self.row = 0
-        self.col = 0
-
-    def reset(self):
-        self.col = 0
-        self.row = 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.row >= common.DIM:
-            raise StopIteration
-        val = Cell(self.board, self.row, self.col)
-        self.col = self.col + 1
-        if self.col >= common.DIM:
-            self.col = 0
-            self.row = self.row + 1
-        return val
-
-
 # Iterates through all the Cells in a given Row
 class RowCellIterator:
     def __init__(self, board, row):
@@ -170,6 +146,172 @@ class BlockCellIterator:
             self.block_col = 0
             self.block_row = self.block_row + 1
         return cell
+
+
+# Iterates through all the Cells one the board
+class BoardCellIterator:
+    def __init__(self, board):
+        self.board = board
+        self.row = 0
+        self.col = 0
+
+    def reset(self):
+        self.col = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.col == common.DIM:
+            self.col = 0
+            self.row += 1
+        if self.row == common.DIM:
+            raise StopIteration
+        val = Cell(self.board, self.row, self.col)
+        self.col += 1
+        return val
+
+
+def block_for_rc(row, col):
+    sg_row = math.floor(row / common.BASIS)
+    sg_col = math.floor(col / common.BASIS)
+    return [sg_row, sg_col]
+
+
+# select k from n.  Number of elements will be
+# n!/(k! - (n-k)!)
+def gen_subset_indexes(n, k):
+    subsets = []
+    max = 1 << n
+    for i in range(max):
+        indexes = []
+        for x in range(9):
+            if (i >> x) & 1 == 1:
+                indexes.append(x)
+        if len(indexes) == k:
+            subsets.append(indexes)
+    return subsets
+
+
+# generates all subsets of length k
+def gen_subsets(allset, k):
+    subsets = []
+    indexes = gen_subset_indexes(len(allset), k)
+    for i in indexes:
+        subset = []
+        for j in i:
+            subset.append(allset[j])
+        subsets.append(subset)
+    return subsets
+
+
+class TupleKey:
+    def __init__(self, house, location, tuple):
+        self.house = house
+        self.location = location
+        self.tuple = tuple
+
+    def __eq__(self, other):
+        if not isinstance(other, TupleKey):
+            return False
+        return ((self.house == other.house) and
+                (self.location == other.location) and
+                (self.tuple == other.tuple))
+
+    def __hash__(self):
+        return hash(self.__str__())
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return "%s %s %s" % (self.house, self.location, self.tuple)
+
+
+def append_to_tuple_map(tuple_map, r, c, tuple, board):
+    def no_singletons(board, itr):
+        ok = True
+        for cell in itr:
+            if not ok:
+                break
+            for digit in tuple:
+                if cell.get() == digit:
+                    ok = False
+                    break
+        return ok
+
+    tuple_str = ""
+    for i in tuple:
+        tuple_str += i
+    keys = []
+
+    if no_singletons(board, RowCellIterator(board, r)):
+        keys.append(TupleKey('r', r, tuple_str))
+
+    if no_singletons(board, ColCellIterator(board, c)):
+        keys.append(TupleKey('c', c, tuple_str))
+
+    if no_singletons(board, BlockCellIterator(board, r, c)):
+        keys.append(TupleKey('b', block_for_rc(r, c), tuple_str))
+
+    for key in keys:
+        if tuple_map.get(key) is None:
+            tuple_map[key] = []
+        tuple_map[key].append((r, c))
+
+
+def generate_hidden_tuple_map(board, k):
+    tuples = gen_subsets(common.FULL_SET, k)
+    tuple_map = dict()
+    for cell in BoardCellIterator(board):
+        if len(cell.get()) == 1:
+            continue
+        for tuple in tuples:
+            for digit in tuple:
+                if digit in cell.get():
+                    append_to_tuple_map(
+                        tuple_map, cell.r, cell.c, tuple, board)
+                    break
+    return tuple_map
+
+
+def find_hidden_tuples(board, k):
+    tuple_map = generate_hidden_tuple_map(board, k)
+    found = dict()
+    for (key, values) in tuple_map.items():
+        if len(values) == k:
+            found[key] = values
+    return found
+
+
+def reduce_hidden_tuples(board, found, n):
+    for (key, cells) in found.items():
+        digits_in = key.tuple
+        digits_out = common.FULL_SET
+        for c in digits_in:
+            digits_out = digits_out.replace(c, '')
+
+        itr = None
+        if key.house == 'b':
+            itr = BlockCellIterator(board, cells[0][0], cells[0][1])
+        elif key.house == 'r':
+            itr = RowCellIterator(board, cells[0][0])
+        elif key.house == 'c':
+            itr = ColCellIterator(board, cells[0][1])
+        else:
+            assert(itr is not None)
+
+        for cell in itr:
+            ct = (cell.r, cell.c)
+            if ct in cells:
+                cell.set(cell.remove_from_set(digits_out))
+            else:
+                cell.set(cell.remove_from_set(digits_in))
+
+
+def find_and_reduce_hidden_tuples(board, n):
+    found = find_hidden_tuples(board, n)
+    reduce_hidden_tuples(board, found, n)
 
 
 def remove_from_set(cell_set, vals):
@@ -326,6 +468,8 @@ def solve_puzzle(puzzle):
         reduce_naked_pairs(board)
         reduce_singletons(board)
         reduced = reduce_solved(board)
+        find_and_reduce_hidden_tuples(board, 4)
+
     return board
 
 
