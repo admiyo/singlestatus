@@ -464,7 +464,7 @@ def solve_puzzle(puzzle):
     reduced = 10
     while reduced > 0:
         reduced = reduced - 1
-        x_wing(board)
+        #x_wing(board)
         reduce_naked_pairs(board)
         reduce_singletons(board)
         reduced = reduce_solved(board)
@@ -488,5 +488,5 @@ def solve_from_file():
     print(json.dumps(solved_map))
 
 
-# solve_from_file()
-solve_sample()
+solve_from_file()
+#solve_sample()
